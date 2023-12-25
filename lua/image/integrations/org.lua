@@ -28,9 +28,10 @@ local function findPatternOccurrences()
 
     if start_col ~= nil then
       local end_row = start_row
+      local range = { start_row = tonumber(start_row) - 1, start_col = start_col, end_row = tonumber(end_row) - 1, end_col = end_col }
       table.insert(occurrences, {
         node = nil,
-        range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
+        range = range,
         url = url,
       })
     end
