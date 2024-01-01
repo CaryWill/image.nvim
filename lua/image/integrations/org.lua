@@ -1,5 +1,12 @@
 local document = require("image/utils/document")
 
+local is_image = function(filepath)
+  local image_extensions = { "png", "jpg", "jpeg", "gif", "webp" } -- Supported image formats
+  local split_path = vim.split(filepath:lower(), ".", { plain = true })
+  local extension = split_path[#split_path]
+  return vim.tbl_contains(image_extensions, extension)
+end
+
 local function findMatches(input)
   local pattern = "%[%[([^%[%]]-)%]%]"
   local matches = {}
@@ -28,12 +35,19 @@ local function findPatternOccurrences()
 
     if start_col ~= nil then
       local end_row = start_row
-      local range = { start_row = tonumber(start_row) - 1, start_col = start_col, end_row = tonumber(end_row) - 1, end_col = end_col }
-      table.insert(occurrences, {
-        node = nil,
-        range = range,
-        url = url,
-      })
+      local range = {
+        start_row = tonumber(start_row) - 1,
+        start_col = start_col,
+        end_row = tonumber(end_row) - 1,
+        end_col = end_col,
+      }
+      if is_image(url) then
+        table.insert(occurrences, {
+          node = nil,
+          range = range,
+          url = url,
+        })
+      end
     end
   end
 
