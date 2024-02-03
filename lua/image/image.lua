@@ -30,9 +30,14 @@ end
 ---@return number?
 function Image:get_extmark_id()
   local extmark = buf_extmark_map[self.buffer .. ":" .. self.geometry.y]
-  if extmark then
-    return extmark.id
-  end
+  if extmark then return extmark.id end
+end
+
+function Image:has_extmark_moved()
+  if not self.extmark then return false end
+  local extmark =
+    vim.api.nvim_buf_get_extmark_by_id(self.buffer, self.global_state.extmarks_namespace, self.extmark.id, {})
+  return extmark and extmark[1] ~= self.extmark.row, extmark and extmark[1] or nil
 end
 
 ---@param geometry? ImageGeometry
@@ -84,18 +89,16 @@ function Image:render(geometry)
         end
 
         -- utils.debug(("(image.render) creating extmark %s"):format(self.internal_id))
-        local ok = pcall(
-          vim.api.nvim_buf_set_extmark,
-          self.buffer,
-          self.global_state.extmarks_namespace,
-          row > 0 and row - 1 or 0,
-          0,
-          {
+        local extmark_row = row > 0 and row - 1 or 0
+        local ok, extmark_id =
+          pcall(vim.api.nvim_buf_set_extmark, self.buffer, self.global_state.extmarks_namespace, extmark_row, 0, {
             id = self.internal_id,
             virt_lines = filler,
-          }
-        )
-        if ok then buf_extmark_map[extmark_key] = { id = self.internal_id, height = height } end
+          })
+        if ok then
+          buf_extmark_map[extmark_key] = { id = self.internal_id, height = height }
+          self.extmark = { id = extmark_id, row = extmark_row }
+        end
       end
     end
 
@@ -258,6 +261,7 @@ local from_file = function(path, options, state)
         is_rendered = false,
         crop_hash = nil,
         resize_hash = nil,
+        namespace = opts.namespace or nil,
       }, state)
       -- utils.debug(("image.nvim: cloned image %s from %s"):format(clone.id, instance.id))
       return clone
@@ -318,6 +322,7 @@ local from_file = function(path, options, state)
     is_rendered = false,
     crop_hash = nil,
     resize_hash = nil,
+    namespace = opts.namespace or nil,
   }, state)
 
   return instance

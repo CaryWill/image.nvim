@@ -282,6 +282,21 @@ api.setup = function(options)
       end,
     })
   end
+
+  -- sync with extmarks
+  vim.api.nvim_create_autocmd({ "BufWritePost", "TextChanged", "TextChangedI" }, {
+    group = group,
+    callback = function(event)
+      local images = api.get_images({ buffer = event.buf })
+      for _, img in ipairs(images) do
+        local has_moved, extmark_y = img:has_extmark_moved()
+        if has_moved and extmark_y ~= nil then
+          img.geometry.y = extmark_y + 1
+          img:render()
+        end
+      end
+    end,
+  })
 end
 
 local guard_setup = function()
@@ -351,17 +366,21 @@ api.clear = function(id)
   end
 end
 
----@param opts? { window?: number, buffer?: number }
+---@param opts? { window?: number, buffer?: number, namespace?: string }
 ---@return Image[]
 api.get_images = function(opts)
   local images = {}
+  local namespace = opts and opts.namespace or nil
   for _, current_image in pairs(state.images) do
-    if
-      (opts and opts.window and opts.window == current_image.window and not opts.buffer)
-      or (opts and opts.window and opts.window == current_image.window and opts.buffer and opts.buffer == current_image.buffer)
-      or not opts
-    then
-      table.insert(images, current_image)
+    if (namespace and current_image.namespace == namespace) or not namespace then
+      if
+        (opts and opts.window and opts.window == current_image.window and not opts.buffer)
+        or (opts and opts.buffer and opts.buffer == current_image.buffer and not opts.window)
+        or (opts and opts.window and opts.buffer and opts.window == current_image.window and opts.buffer == current_image.buffer)
+        or not opts
+      then
+        table.insert(images, current_image)
+      end
     end
   end
   return images
