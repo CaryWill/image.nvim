@@ -9,7 +9,7 @@ It has built-in Markdown and Neorg integrations that you can use right now.
 \
 It can also render image files as images when opened.
 
-Join on Discord: https://discord.gg/tQVKuZCZ
+Join on Discord: https://discord.gg/GTwbCxBNgz
 
 https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7f5759e
 
@@ -149,6 +149,26 @@ All the backends support rendering inside Tmux.
 
 - `markdown` - uses [tree-sitter-markdown](https://github.com/MDeiml/tree-sitter-markdown) and supports any Markdown-based grammars (Quarto, VimWiki Markdown)
 - `neorg` - uses [tree-sitter-norg](https://github.com/nvim-neorg/tree-sitter-norg) (also check https://github.com/nvim-neorg/neorg/issues/971)
+
+You can configure where images are searched for on a per-integration basis by passing a function to
+`resolve_image_path` as shown below:
+
+```lua
+require('image').setup({
+  integrations = {
+    markdown = {
+      resolve_image_path = function(document_path, image_path, fallback)
+        -- document_path is the path to the file that contains the image
+        -- image_path is the potentially relative path to the image. for
+        -- markdown it's `![](this text)`
+
+        -- you can call the fallback function to get the default behavior
+        return fallback(document_path, image_path)
+      end,
+    }
+  }
+})
+```
 
 ## API
 
