@@ -16,6 +16,22 @@ local function findMatches(input)
   return matches
 end
 
+-- [[file:../a.png]]
+-- [[file:/a.png]]
+-- [[/a.png]]
+local function normalizeImageUrl(url)
+  local filePrefix = "file:"
+  local substring = url:sub(#filePrefix + 1) -- Get substring after "file:"
+
+  -- Check if the substring is an absolute path
+  if substring:sub(1, 1) == "/" then
+    return substring -- Return the substring if it's an absolute path
+  else
+    local containing_dir = vim.fn.fnamemodify(vim.fn.expand("%:p:h"), ":p")
+    return containing_dir .. substring -- Prefix the substring with "test" if it's not an absolute path
+  end
+end
+
 local function findPatternOccurrences()
   local total_lines = vim.fn.line("$")
   local occurrences = {}
@@ -45,7 +61,7 @@ local function findPatternOccurrences()
         table.insert(occurrences, {
           node = nil,
           range = range,
-          url = url,
+          url = normalizeImageUrl(url),
         })
       end
     end
